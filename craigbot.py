@@ -19,8 +19,40 @@ class CraigslistScraper(object):
 
         self.url = f"https://{location}.craigslist.org/search/sss?/search_distance={radius}&postal={postal}&max_price={max_price}"
 
-    def test(self):
-        print(self.url)
+        self.driver = webdriver.Chrome()
+        self.delay = 3
+
+    def load_craigslist_url(self):
+        self.driver.get(self.url)
+        try:
+            wait = WebDriverWait(self.driver, self.delay)
+            wait.until(EC.presence_of_element_located((By.ID, "searchform")))
+            print("page is ready")
+        except TimeoutException:
+            print("loading took too much time")
+
+    def extract_post_titles(self):
+
+        all_posts = self.driver.find_elements_by_class_name("result-row")
+        #print(all_post)
+        post_title_list = []
+        for post in all_posts:
+            print(post.text)
+            post_title_list.append(post.text)
+        return post_title_list
+
+    def extract_post_urls(self):
+        url_list = []
+        html_page = urllib.request.urlopen(self.url)
+        soup = BeautifulSoup(html_page, 'lxml')
+        for link in soup.findAll("a", {"class":"result-title hdrlink"}):
+            print(link)
+            url_list.append(link["href"])
+        return(url_list)
+
+    def quit(self):
+        self.driver.close()
+
 
 location = "sfbay"
 postal="94201"
@@ -29,4 +61,7 @@ radius = "5"
 
 
 scraper = CraigslistScraper(location, postal, max_price, radius)
-scraper.test()
+scraper.load_craigslist_url()
+#scraper.extract_post_titles()
+scraper.extract_post_urls()
+scraper.quit()
